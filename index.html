@@ -266,28 +266,53 @@
     toggleMdp.textContent = isPwd ? 'masquer' : 'afficher';
   });
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nom = nomInput.value.trim();
-    const mdp = mdpInput.value;
+  form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    if(!nom || !mdp){
-      errorMsg.textContent = 'Veuillez remplir les deux champs.';
-      return;
-    }
-    errorMsg.textContent = '';
+  const nom = nomInput.value.trim();
+  const mdp = mdpInput.value;
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Connexion...';
+  if (!nom || !mdp) {
+    errorMsg.textContent = 'Veuillez remplir les deux champs.';
+    return;
+  }
 
-    setTimeout(() => {
+  errorMsg.textContent = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Connexion...';
+
+  try {
+    const reponse = await fetch('http://127.0.0.1:5000/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: nom,
+        password: mdp
+      })
+    });
+
+    const resultat = await reponse.json();
+
+    if (resultat.success) {
       welcomeText.textContent = `Bienvenue, ${nom}`;
       avatarInit.textContent = nom.charAt(0).toUpperCase();
+
       loginView.style.display = 'none';
       welcomeView.style.display = 'block';
-    }, 600);
-  });
+    } else {
+      errorMsg.textContent = 'Identifiants incorrects.';
+    }
 
+  } catch (erreur) {
+    errorMsg.textContent = 'Impossible de contacter le serveur.';
+    console.error(erreur);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Se connecter';
+  }
+});
   logoutBtn.addEventListener('click', () => {
     welcomeView.style.display = 'none';
     loginView.style.display = 'block';
